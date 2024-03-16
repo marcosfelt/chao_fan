@@ -5,7 +5,7 @@ Generate meal plans automatically using what's out there on the internet.
 
 - [x] Create pecipe database generation pipeline
 - [ ] Create meal plan pipeline
-- [ ] Setup pipelines to run automatically in cloud - use GitHub actions
+- [x] Setup pipelines to run automatically in cloud - use GitHub actions
 - [ ] Create web app for choosing meal plans
 - [ ] Create walmart order pipeline
 
