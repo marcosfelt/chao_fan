@@ -41,18 +41,6 @@ class Recipe(SQLModel, table=True):
     spoonacular_score: Optional[int] = None
 
 
-def camel_to_snake(camel_case_str):
-    snake_case_str = ""
-    for i, char in enumerate(camel_case_str):
-        if char.isupper():
-            if i != 0:
-                snake_case_str += "_"
-            snake_case_str += char.lower()
-        else:
-            snake_case_str += char
-    return snake_case_str
-
-
 def add_recipes(engine):
     import json
 

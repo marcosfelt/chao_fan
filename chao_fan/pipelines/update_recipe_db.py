@@ -5,13 +5,18 @@ from chao_fan.integrations.pinterest import (
     get_pin_links,
     Pin,
 )
+from chao_fan.integrations.spoonacular import extract_recipe
 from dotenv import load_dotenv
 import os
 from chao_fan.models import Recipe
 from chao_fan.db import engine
-from sqlmodel import Session, text, bindparam
+from sqlmodel import Session, text, bindparam, select
 from sqlalchemy.engine import Engine
 import logging
+from tqdm import tqdm
+
+BOARD_NAME = "Cookin'"
+MAX_SPOONACULAR_API_CALLS = 60
 
 
 def get_pinterest_links(board_name: str) -> List[Pin]:
@@ -81,13 +86,28 @@ def insert_pins_into_db(pins: List[Pin], engine: Engine):
     """
     with Session(engine) as session:
         for pin in pins:
-            recipe = Recipe(source_name=pin.site_name, source_url=pin.url)
+            recipe = Recipe(
+                source_name=pin.site_name,
+                source_url=pin.url,
+                spoonacular_enriched=False,
+            )
             session.add(recipe)
         session.commit()
 
 
-def enrich_recipes_spoonacular():
-    pass
+def enrich_recipes_spoonacular(engine: Engine, max_api_calls: int = 150):
+    with Session(engine) as session:
+        statement = (
+            select(Recipe)
+            .where(Recipe.spoonacular_enriched == False)
+            .limit(max_api_calls)
+        )
+        results = session.exec(statement)
+        for recipe in tqdm(results, total=max_api_calls):
+            enriched_recipe = extract_recipe(recipe.source_url)
+            recipe.sqlmodel_update(enriched_recipe)
+            session.add(recipe)
+        session.commit()
 
 
 def update_recipe_db():
@@ -96,12 +116,19 @@ def update_recipe_db():
     load_dotenv()
 
     # Get pinterest links
-    BOARD_NAME = "Cookin'"
+
     logger.info("Getting pinterest links")
     pins = get_pinterest_links(BOARD_NAME)
     new_pins = find_pins_not_in_db(pins, engine)
     logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
     insert_pins_into_db(new_pins, engine)
+
+    # Enrich recipes
+    logger.info("Enriching recipes with Spoonacular")
+    try:
+        enrich_recipes_spoonacular(engine, max_api_calls=MAX_SPOONACULAR_API_CALLS)
+    except ValueError as e:
+        logger.error(e)
 
 
 if __name__ == "__main__":

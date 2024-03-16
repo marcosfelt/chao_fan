@@ -13,6 +13,7 @@ py3-pinterest = {git = "https://github.com/bstoilov/py3-pinterest.git"}
 pint = "^0.23"
 python-dotenv = "^1.0.1"
 sqlmodel = "^0.0.16"
+requests = "^2.31.0"
 
 [tool.poetry.dev-dependencies]
 
