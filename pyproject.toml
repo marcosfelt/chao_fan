@@ -14,6 +14,7 @@ pint = "^0.23"
 python-dotenv = "^1.0.1"
 sqlmodel = "^0.0.16"
 requests = "^2.31.0"
+tqdm = "^4.66.2"
 
 [tool.poetry.dev-dependencies]
 
