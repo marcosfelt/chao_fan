@@ -86,6 +86,10 @@ def insert_pins_into_db(pins: List[Pin], engine: Engine):
         session.commit()
 
 
+def enrich_recipes_spoonacular():
+    pass
+
+
 def update_recipe_db():
     """Update recipe database with new pins from pinterest board"""
     logger = logging.getLogger(__name__)

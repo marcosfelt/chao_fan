@@ -5,6 +5,7 @@ from sqlmodel import Field, SQLModel, Session, create_engine, AutoString, select
 
 class Recipe(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    spoonacular_enriched: bool = False
     title: Optional[str] = None
     vegetarian: Optional[bool] = None
     vegan: Optional[bool] = None
