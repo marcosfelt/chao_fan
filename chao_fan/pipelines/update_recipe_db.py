@@ -112,7 +112,7 @@ def enrich_recipes_spoonacular(engine: Engine, max_api_calls: int = 150):
 
 def update_recipe_db():
     """Update recipe database with new pins from pinterest board"""
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__, format="%(asctime)s - %(message)s")
     load_dotenv()
 
     # Get pinterest links

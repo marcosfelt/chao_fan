@@ -39,26 +39,3 @@ class Recipe(SQLModel, table=True):
     instructions: Optional[str] = None
     # analyzed_instructions: Optional[List[dict]] = None
     spoonacular_score: Optional[int] = None
-
-
-def add_recipes(engine):
-    import json
-
-    with open("data/recipes.json", "r") as file:
-        recipe_dicts = json.load(file)
-    session = Session(engine)
-    for recipe_dict in recipe_dicts:
-        recipe_camel_case = {camel_to_snake(k): v for k, v in recipe_dict.items()}
-        del recipe_camel_case["id"]
-        recipe = Recipe(**recipe_camel_case)
-        session.add(recipe)
-    session.commit()
-    session.close()
-
-
-def get_recipe(engine, url: str):
-    with Session(engine) as session:
-        statement = select(Recipe).where(Recipe.source_url == url)
-        results = session.exec(statement)
-        for recipe in results:
-            print(recipe)
