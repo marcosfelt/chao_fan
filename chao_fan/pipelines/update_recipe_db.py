@@ -137,4 +137,3 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     update_recipe_db()
-    print("Recipe database updated.")

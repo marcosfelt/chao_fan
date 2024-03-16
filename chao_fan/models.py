@@ -39,3 +39,7 @@ class Recipe(SQLModel, table=True):
     instructions: Optional[str] = None
     # analyzed_instructions: Optional[List[dict]] = None
     spoonacular_score: Optional[int] = None
+
+
+class MealPlan(SQLModel):
+    pass

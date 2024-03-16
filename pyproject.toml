@@ -15,6 +15,10 @@ python-dotenv = "^1.0.1"
 sqlmodel = "^0.0.16"
 requests = "^2.31.0"
 tqdm = "^4.66.2"
+outlines = "^0.0.36"
+tiktoken = "^0.6.0"
+llama-cpp-python = "^0.2.56"
+huggingface-hub = "^0.21.4"
 
 [tool.poetry.dev-dependencies]
 
