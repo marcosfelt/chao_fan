@@ -66,6 +66,7 @@ def extract_recipe(
 
     # Convert to recipe
     response_converted = {camel_to_snake(k): v for k, v in response.json().items()}
+    del response_converted["id"]
     recipe = Recipe(spoonacular_enriched=True, **response_converted)
     return recipe
 
