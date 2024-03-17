@@ -1,13 +1,16 @@
 """Generate meal plan themes for different cuisines using llama"""
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
 import outlines
 from outlines import models, generate
 from pydantic import BaseModel, ValidationError
+from outlines.models.llamacpp import LlamaCpp
+from llama_cpp.llama_types import Embedding
 from tqdm import trange, tqdm
 import json
 import logging
 from huggingface_hub import hf_hub_download
+import numpy as np
 
 CUISINES_NAMES = [
     "Japanese",
@@ -22,21 +25,57 @@ CUISINES_NAMES = [
 logger = logging.getLogger(__name__)
 
 
-def get_model(model_name: str = "phi-2.Q4_K_M.gguf"):
+def get_model(
+    model_name: str = "phi-2.Q4_K_M.gguf", llama_kwargs: Optional[Dict[str, Any]] = None
+) -> LlamaCpp:
     """Get a phi-2 model from Hugging Face Hub
 
     Parameters
     ----------
     model_name : str, optional
         The name of the model to download, by default "phi-2.Q4_K_M.gguf"
+    llama_kwargs : Optional[Dict[str, Any]], optional
+        Additional llama arguments, by default None
 
     Notes
     -----
     Model is cached after first download
 
+    Returns
+    -------
+    LlamaCpp
+        The model
+
     """
     model_path = hf_hub_download(repo_id="TheBloke/phi-2-GGUF", filename=model_name)
-    return models.llamacpp(model_path, verbose=False)
+    base_llama_kwargs = dict(verbose=False)
+    if llama_kwargs is not None:
+        base_llama_kwargs.update(llama_kwargs)
+    return models.llamacpp(model_path, **base_llama_kwargs)
+
+
+def generate_embeddings(
+    model: LlamaCpp, text: Union[str, List[str]]
+) -> List[Embedding]:
+    """Generate embeddings using the model
+
+    Parameters
+    ----------
+    model : LlamaCpp
+        The model to use. Must be initialized using embedding=True
+    text : str | List[str]
+        The text to embed. Can be a single string or a list of strings
+
+    Returns
+    -------
+    List[Embedding]
+        The embeddings
+
+    """
+    if isinstance(text, str):
+        text = [text]
+    embeddings = model.model.create_embedding(text)
+    return embeddings["data"]
 
 
 class Example(BaseModel):
@@ -44,14 +83,14 @@ class Example(BaseModel):
     answer: str
 
 
-class Cuisine(BaseModel):
+class CuisineDescription(BaseModel):
     name: str
     ingredients: str
 
 
 class MealPlanTheme(BaseModel):
     name: str
-    cuisine: Cuisine
+    cuisine: CuisineDescription
 
 
 @outlines.prompt
@@ -75,13 +114,13 @@ def create_ingredients_example(cuisine: str, ingredients: List[str]):
 
 
 @outlines.prompt
-def meal_plan_theme_prompt(cuisine: Cuisine, adjective: str = "fun"):
+def meal_plan_theme_prompt(cuisine: CuisineDescription, adjective: str = "fun"):
     """
     {{ cuisine.name }} food uses the following ingredients: {{ cuisine.ingredients }}. Create a theme for a {{ adjective }} {{ cuisine.name }} meal plan.
     """
 
 
-def create_theme_example(theme: str, cuisine: Cuisine):
+def create_theme_example(theme: str, cuisine: CuisineDescription):
     question = meal_plan_theme_prompt(cuisine)
     answer = json.dumps({"theme": theme})
     return Example(question=question, answer=answer)
@@ -107,7 +146,9 @@ def few_shots(instructions: str, examples: List[Example], question: str):
     """
 
 
-def generate_cuisine_ingredients(model, cuisines: List[str]) -> List[Cuisine]:
+def generate_cuisine_ingredients(
+    model, cuisines: List[str]
+) -> List[CuisineDescription]:
     """
     Generate ingredients for a list of cuisines.
 
@@ -123,7 +164,7 @@ def generate_cuisine_ingredients(model, cuisines: List[str]) -> List[Cuisine]:
         create_ingredients_example("Chinese", ["soy sauce", "rice", "ginger"]),
         create_ingredients_example("Mediterannean", ["olive oil", "tomatoes", "feta"]),
     ]
-    generator = generate.json(model, Cuisine)
+    generator = generate.json(model, CuisineDescription)
     cuisine_ingredients = []
     for cuisine in tqdm(cuisines):
         prompt = few_shots(
@@ -133,7 +174,7 @@ def generate_cuisine_ingredients(model, cuisines: List[str]) -> List[Cuisine]:
         )
         logger.debug(prompt)
         try:
-            c: Cuisine = generator(prompt)
+            c: CuisineDescription = generator(prompt)
             cuisine_ingredients.append(c)
         except ValidationError as e:
             logger.error(e)
@@ -145,7 +186,7 @@ class SimpleTheme(BaseModel):
     theme: str
 
 
-def generate_themes(model, cuisines: List[Cuisine]) -> List[MealPlanTheme]:
+def generate_themes(model, cuisines: List[CuisineDescription]) -> List[MealPlanTheme]:
     """
     Generate ingredients for a list of cuisines.
 
@@ -157,15 +198,17 @@ def generate_themes(model, cuisines: List[Cuisine]) -> List[MealPlanTheme]:
     examples = [
         create_theme_example(
             "Total Tacos",
-            Cuisine(name="Mexican", ingredients="tortillas, beef, cheese"),
+            CuisineDescription(name="Mexican", ingredients="tortillas, beef, cheese"),
         ),
         create_theme_example(
             "Fried rice rules",
-            Cuisine(name="Chinese", ingredients="soy sauce, rice, ginger"),
+            CuisineDescription(name="Chinese", ingredients="soy sauce, rice, ginger"),
         ),
         create_theme_example(
             "Fresh Mediterannean salads",
-            Cuisine(name="Mediterannean", ingredients="olive oil, tomatoes, feta"),
+            CuisineDescription(
+                name="Mediterannean", ingredients="olive oil, tomatoes, feta"
+            ),
         ),
     ]
 
