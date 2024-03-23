@@ -114,10 +114,6 @@ def extract_recipe(
     cuisines_list = response_converted.get("cuisines")
     if "cuisines" in response_converted:
         del response_converted["cuisines"]
-    import json
-
-    with open("response_converted.json", "w") as f:
-        json.dump(response_converted, f)
     recipe = Recipe(spoonacular_enriched=True, **response_converted)
     if cuisines_list:
         cuisines = deserialize_cuisines(cuisines_list)
