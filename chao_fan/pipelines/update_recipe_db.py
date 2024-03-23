@@ -9,14 +9,14 @@ from chao_fan.integrations.spoonacular import extract_recipe
 from dotenv import load_dotenv
 import os
 from chao_fan.models import Recipe
-from chao_fan.db import engine
+from chao_fan.db import engine, SQLModel
 from sqlmodel import Session, text, bindparam, select
 from sqlalchemy.engine import Engine
 import logging
 from tqdm import tqdm
 
 BOARD_NAME = "Cookin'"
-MAX_SPOONACULAR_API_CALLS = 60
+MAX_SPOONACULAR_API_CALLS = 1
 
 
 def get_pinterest_links(board_name: str) -> List[Pin]:
@@ -95,19 +95,31 @@ def insert_pins_into_db(pins: List[Pin], engine: Engine):
         session.commit()
 
 
-def enrich_recipes_spoonacular(engine: Engine, max_api_calls: int = 150):
-    with Session(engine) as session:
-        statement = (
-            select(Recipe)
-            .where(Recipe.spoonacular_enriched == False)
-            .limit(max_api_calls)
-        )
-        results = session.exec(statement)
-        for recipe in tqdm(results, total=max_api_calls):
-            enriched_recipe = extract_recipe(recipe.source_url)
-            recipe.sqlmodel_update(enriched_recipe)
-            session.add(recipe)
-        session.commit()
+def _enrich_recipes_spoonacular_batch(session: Session, recipes: List[Recipe], n: int):
+    for recipe in tqdm(recipes, desc="Enriching", total=n):
+        enriched_recipe = extract_recipe(recipe.source_url)
+        recipe_data = recipe.model_dump(exclude_unset=True)
+        enriched_recipe.sqlmodel_update(recipe_data)
+        session.add(enriched_recipe)
+
+
+def enrich_recipes_spoonacular(
+    engine: Engine, max_api_calls: int = 150, batch_size: int = 10
+):
+    # Query for recipes that need to be enriched
+    i = 0
+    batch_size = batch_size if batch_size < max_api_calls else max_api_calls
+    while i < max_api_calls:
+        with Session(engine) as session:
+            statement = (
+                select(Recipe)
+                .where(Recipe.spoonacular_enriched == False)
+                .limit(batch_size)
+            )
+            recipes = session.exec(statement)
+            _enrich_recipes_spoonacular_batch(session, recipes, batch_size)
+            session.commit()
+            i += batch_size
 
 
 def update_recipe_db():
@@ -116,7 +128,6 @@ def update_recipe_db():
     load_dotenv()
 
     # Get pinterest links
-
     logger.info("Getting pinterest links")
     pins = get_pinterest_links(BOARD_NAME)
     new_pins = find_pins_not_in_db(pins, engine)
