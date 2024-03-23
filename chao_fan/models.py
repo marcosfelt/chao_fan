@@ -10,14 +10,30 @@ from sqlalchemy import DateTime
 from datetime import datetime
 from enum import Enum
 
+### Link Models ###
+# These have to be first so they can be referenced by the other models
 
-class RecipeMealPlanMealLink(SQLModel, table=True):
+
+class RecipeMealLink(SQLModel, table=True):
     recipe_id: Optional[int] = Field(
         default=None, foreign_key="recipe.id", primary_key=True
     )
-    meal_plan_meal_id: Optional[int] = Field(
-        default=None, foreign_key="mealplanmeal.id", primary_key=True
+    meal_id: Optional[int] = Field(
+        default=None, foreign_key="meal.id", primary_key=True
     )
+
+
+class RecipeCuisineLink(SQLModel, table=True):
+    recipe_id: Optional[int] = Field(
+        default=None, foreign_key="recipe.id", primary_key=True
+    )
+    cuisine_id: Optional[int] = Field(
+        default=None, foreign_key="cuisine.id", primary_key=True
+    )
+
+
+### Main Models ###
+# These are the main models that will be used in the application
 
 
 class Recipe(SQLModel, table=True):
@@ -44,55 +60,56 @@ class Recipe(SQLModel, table=True):
     price_per_serving: Optional[float] = None
     ready_in_minutes: Optional[int] = None
     servings: Optional[int] = None
-    source_url: HttpUrl = Field(sa_type=AutoString, nullable=True)
-    image: HttpUrl = Field(sa_type=AutoString, nullable=True)
+    source_url: Optional[str] = None
+    image: Optional[str] = None
     image_type: Optional[str] = None
     summary: Optional[str] = None
-    spoonacular_score: Optional[int] = None
+    spoonacular_score: Optional[float] = None
 
-    instructions: List["Instruction"] = Relationship(back_populates="Recipe")
-    cuisines: List["Cuisine"] = Relationship(back_populates="Recipe")
-    ingredients: List["Ingredient"] = Relationship(back_populates="Recipe")
-    meal_plan_meals: List["MealPlanMeal"] = Relationship(
-        back_populates="Recipe", link_model=RecipeMealPlanMealLink
+    instructions: List["Instruction"] = Relationship(back_populates="recipe")
+    cuisines: List["Cuisine"] = Relationship(
+        back_populates="recipes", link_model=RecipeCuisineLink
+    )
+    recipe_ingredients: List["RecipeIngredient"] = Relationship(back_populates="recipe")
+    meals: List["Meal"] = Relationship(
+        back_populates="recipes", link_model=RecipeMealLink
     )
 
 
 class Instruction(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    step_number: Optional[int] = None
+    step: Optional[str] = None
     recipe_id: Optional[int] = Field(default=None, foreign_key="recipe.id")
-    step_number: int
-    step: str
-
-
-class RecipeIngredientLink(SQLModel, table=True):
-    recipe_id: Optional[int] = Field(
-        default=None, foreign_key="recipe.id", primary_key=True
-    )
-    ingredient_id: Optional[int] = Field(
-        default=None, foreign_key="ingredient.id", primary_key=True
-    )
+    recipe: Optional[Recipe] = Relationship(back_populates="instructions")
 
 
 class Ingredient(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    recipes: List[Recipe] = Relationship(back_populates="Ingredient")
+    spoonacular_id: Optional[str] = None
+    aisle: Optional[str] = None
+    recipe_ingredients: List["RecipeIngredient"] = Relationship(
+        back_populates="ingredient"
+    )
 
 
-class RecipeCuisineLink(SQLModel, table=True):
-    recipe_id: Optional[int] = Field(
-        default=None, foreign_key="recipe.id", primary_key=True
-    )
-    cuisine_id: Optional[int] = Field(
-        default=None, foreign_key="cuisine.id", primary_key=True
-    )
+class RecipeIngredient(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    amount: Optional[str] = None
+    unit: Optional[str] = None
+    ingredient_id: Optional[int] = Field(default=None, foreign_key="ingredient.id")
+    ingredient: Optional[Ingredient] = Relationship(back_populates="recipe_ingredients")
+    recipe_id: Optional[int] = Field(default=None, foreign_key="recipe.id")
+    recipe: Optional[Recipe] = Relationship(back_populates="recipe_ingredients")
 
 
 class Cuisine(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    recipes: List[Recipe] = Relationship(back_populates="Cuisine")
+    recipes: List[Recipe] = Relationship(
+        back_populates="cuisines", link_model=RecipeCuisineLink
+    )
 
 
 class MealPlan(SQLModel, table=True):
@@ -101,7 +118,7 @@ class MealPlan(SQLModel, table=True):
     end_date: AwareDatetime = Field(default=None, sa_type=DateTime(timezone=True))
     theme: Optional[str] = None
     active: bool = False
-    meals: List["MealPlanMeal"] = Relationship(back_populates="MealPlan")
+    meals: List["Meal"] = Relationship(back_populates="meal_plan")
 
 
 class MealType(str, Enum):
@@ -111,12 +128,12 @@ class MealType(str, Enum):
     snack = "snack"
 
 
-class MealPlanMeal(SQLModel, table=True):
+class Meal(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     meal_time: AwareDatetime = Field(default=None, sa_type=DateTime(timezone=True))
     meal_type: Optional[MealType] = None
     recipes: List[Recipe] = Relationship(
-        back_populates="MealPlanMeal", link_model=RecipeMealPlanMealLink
+        back_populates="meals", link_model=RecipeMealLink
     )
     meal_plan_id: Optional[int] = Field(default=None, foreign_key="mealplan.id")
-    meal_plan: Optional[MealPlan] = Relationship(back_populates="MealPlanMeal")
+    meal_plan: Optional[MealPlan] = Relationship(back_populates="meals")
