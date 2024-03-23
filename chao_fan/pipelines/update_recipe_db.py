@@ -16,7 +16,7 @@ import logging
 from tqdm import tqdm
 
 BOARD_NAME = "Cookin'"
-MAX_SPOONACULAR_API_CALLS = 1
+MAX_SPOONACULAR_API_CALLS = 60
 
 
 def get_pinterest_links(board_name: str) -> List[Pin]:
