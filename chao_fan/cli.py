@@ -1,6 +1,5 @@
-from chao_fan.models import Recipe
-from chao_fan.db import create_db_and_tables
+from .db import engine, SQLModel
 
 
 def setup_db():
-    create_db_and_tables()
+    SQLModel.metadata.create_all(engine)
