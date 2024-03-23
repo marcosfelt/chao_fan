@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 import requests
 import os
 from dotenv import load_dotenv
-from chao_fan.models import Recipe
-import json
+from chao_fan.models import Cuisine, Recipe, Instruction, Ingredient, RecipeIngredient
+from pydantic import HttpUrl
 
 
 def camel_to_snake(camel_case_str):
@@ -16,6 +16,47 @@ def camel_to_snake(camel_case_str):
         else:
             snake_case_str += char
     return snake_case_str
+
+
+def deserialize_instructions(
+    instructions: List[Dict[str, int | str]]
+) -> List[Instruction]:
+    return [
+        Instruction(
+            step_number=instruction_dict["number"], step=instruction_dict["step"]
+        )
+        for instruction_dict in instructions
+    ]
+
+
+def deserialize_ingredients(
+    ingredient_dicts: List[Dict[str, Any]]
+) -> List[RecipeIngredient]:
+    ingredients = []
+    for ingredient_dict in ingredient_dicts:
+        amount, unit = None, None
+        if ingredient_dict.get("measures") and ingredient_dict["measures"].get(
+            "metric"
+        ):
+            amount = ingredient_dict["measures"]["metric"]["amount"]
+            unit = ingredient_dict["measures"]["metric"]["unitShort"]
+
+        ingredients.append(
+            RecipeIngredient(
+                amount=amount,
+                unit=unit,
+                ingredient=Ingredient(
+                    name=ingredient_dict["name"],
+                    spoonacular_id=ingredient_dict["id"],
+                    aisle=ingredient_dict.get("aisle"),
+                ),
+            )
+        )
+    return ingredients
+
+
+def deserialize_cuisines(cuisine_list: List[str]) -> List[Cuisine]:
+    return [Cuisine(name=cuisine) for cuisine in cuisine_list]
 
 
 def extract_recipe(
@@ -50,6 +91,7 @@ def extract_recipe(
         api_key = os.environ.get("SPOONACULAR_API_KEY")
     if api_key is None:
         raise ValueError("api_key cannot be None")
+
     querystring = {
         "apiKey": api_key,
         "url": url,
@@ -67,7 +109,32 @@ def extract_recipe(
     # Convert to recipe
     response_converted = {camel_to_snake(k): v for k, v in response.json().items()}
     del response_converted["id"]
+    if "instructions" in response_converted:
+        del response_converted["instructions"]
+    cuisines_list = response_converted.get("cuisines")
+    if "cuisines" in response_converted:
+        del response_converted["cuisines"]
+    import json
+
+    with open("response_converted.json", "w") as f:
+        json.dump(response_converted, f)
     recipe = Recipe(spoonacular_enriched=True, **response_converted)
+    if cuisines_list:
+        cuisines = deserialize_cuisines(cuisines_list)
+        if len(cuisines) > 0:
+            recipe.cuisines = cuisines
+    if response_converted.get("analyzed_instructions"):
+        instructions = deserialize_instructions(
+            response_converted["analyzed_instructions"][0]["steps"]
+        )
+        if len(instructions) > 0:
+            recipe.instructions = instructions
+    if response_converted.get("extended_ingredients"):
+        ingredients = deserialize_ingredients(
+            response_converted["extended_ingredients"]
+        )
+        if len(ingredients) > 0:
+            recipe.recipe_ingredients = ingredients
     return recipe
 
 
