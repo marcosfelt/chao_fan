@@ -115,15 +115,7 @@ def _enrich_recipes_batch(session: Session, recipes: List[Recipe], n: int):
         session.delete(recipe)
 
 
-# def _enrich_recipes_spoonacular_batch(session: Session, recipes: List[Recipe], n: int):
-#     for recipe in tqdm(recipes, desc="Enriching", total=n):
-#         enriched_recipe = extract_recipe(recipe.source_url)
-#         recipe_data = recipe.model_dump(exclude_unset=True)
-#         enriched_recipe.sqlmodel_update(recipe_data)
-#         session.add(enriched_recipe)
-
-
-def enrich_recipes_spoonacular(
+def enrich_recipes(
     engine: Engine,
     max_api_calls: int = 150,
     batch_size: int = 10,
@@ -172,15 +164,15 @@ def update_recipe_db():
 
     # Get pinterest links
     logger.info("Getting pinterest links")
-    # pins = get_pinterest_links(BOARD_NAME)
-    # new_pins = find_pins_not_in_db(pins, engine)
-    # logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
-    # insert_pins_into_db(new_pins, engine)
+    pins = get_pinterest_links(BOARD_NAME)
+    new_pins = find_pins_not_in_db(pins, engine)
+    logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
+    insert_pins_into_db(new_pins, engine)
 
     # Enrich recipes
     logger.info("Enriching recipes")
     try:
-        enrich_recipes_spoonacular(engine, max_api_calls=MAX_SPOONACULAR_API_CALLS)
+        enrich_recipes(engine, max_api_calls=MAX_SPOONACULAR_API_CALLS)
     except ValueError as e:
         logger.error(e)
 
