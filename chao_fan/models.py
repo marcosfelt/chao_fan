@@ -38,24 +38,13 @@ class RecipeCuisineLink(SQLModel, table=True):
 
 class Recipe(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    spoonacular_enriched: bool = False
+    enrich_at: Optional[AwareDatetime] = Field(
+        default=None, sa_type=DateTime(timezone=True)
+    )
+    enrichment_failed_at: Optional[AwareDatetime] = Field(
+        default=None, sa_type=DateTime(timezone=True)
+    )
     title: Optional[str] = None
-    vegetarian: Optional[bool] = None
-    vegan: Optional[bool] = None
-    gluten_free: Optional[bool] = None
-    dairy_free: Optional[bool] = None
-    very_healthy: Optional[bool] = None
-    cheap: Optional[bool] = None
-    very_popular: Optional[bool] = None
-    sustainable: Optional[bool] = None
-    low_fodmap: Optional[bool] = None
-    weight_watcher_smart_points: Optional[int] = None
-    gaps: Optional[str] = None
-    preparation_minutes: Optional[int] = None
-    cooking_minutes: Optional[int] = None
-    aggregate_likes: Optional[int] = None
-    health_score: Optional[int] = None
-    credits_text: Optional[str] = None
     source_name: Optional[str] = None
     price_per_serving: Optional[float] = None
     ready_in_minutes: Optional[int] = None
@@ -64,8 +53,6 @@ class Recipe(SQLModel, table=True):
     image: Optional[str] = None
     image_type: Optional[str] = None
     summary: Optional[str] = None
-    spoonacular_score: Optional[float] = None
-
     instructions: List["Instruction"] = Relationship(back_populates="recipe")
     cuisines: List["Cuisine"] = Relationship(
         back_populates="recipes", link_model=RecipeCuisineLink
@@ -84,22 +71,50 @@ class Instruction(SQLModel, table=True):
     recipe: Optional[Recipe] = Relationship(back_populates="instructions")
 
 
-class Ingredient(SQLModel, table=True):
+class IngredientNutrition(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    spoonacular_id: Optional[str] = None
-    aisle: Optional[str] = None
+    fdc_id: Optional[int] = None
+    description: Optional[str] = None
+    serving_size: Optional[str] = None
+    food_category: Optional[str] = None
+    sugarstotalincludingnlea_grams: Optional[float] = None
+    fattyacidstotalsaturated_grams: Optional[float] = None
+    cholesterol_grams: Optional[float] = None
+    vitaminctotalascorbicacid_grams: Optional[float] = None
+    vitaminaiu_grams: Optional[float] = None
+    sodiumna_grams: Optional[float] = None
+    potassium_grams: Optional[float] = None
+    ironfe_grams: Optional[float] = None
+    calciumca_grams: Optional[float] = None
+    fiber_grams: Optional[float] = None
+    energy_grams: Optional[float] = None
+    carb_grams: Optional[float] = None
+    fat_grams: Optional[float] = None
+    protein_grams: Optional[float] = None
     recipe_ingredients: List["RecipeIngredient"] = Relationship(
-        back_populates="ingredient"
+        back_populates="ingredient_nutrition"
     )
+
+
+class IngredientPrice(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    description: str
+    price_100grams: float
 
 
 class RecipeIngredient(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
     amount: Optional[str] = None
     unit: Optional[str] = None
-    ingredient_id: Optional[int] = Field(default=None, foreign_key="ingredient.id")
-    ingredient: Optional[Ingredient] = Relationship(back_populates="recipe_ingredients")
+    full_description: Optional[str] = None
+    estimated_price_100grams: Optional[float] = None
+    ingredient_nutrition_id: Optional[int] = Field(
+        default=None, foreign_key="ingredientnutrition.id"
+    )
+    ingredient_nutrition: Optional[IngredientNutrition] = Relationship(
+        back_populates="recipe_ingredients"
+    )
     recipe_id: Optional[int] = Field(default=None, foreign_key="recipe.id")
     recipe: Optional[Recipe] = Relationship(back_populates="recipe_ingredients")
 
