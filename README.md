@@ -27,3 +27,31 @@ Generate meal plans automatically using what's out there on the internet.
 ### Walmart order
 1. Create grocery list from meal plan
 2. Use LaVague model to traverese walmart.com and place order
+
+## Local Setup
+
+0. Clone the repository: `git clone https://github.com/marcosfelt/chao_fan.git`
+1. Install the dependencies: `poetry install` or `pip install -e .`
+2. Download [postgres.app](https://postgresapp.com/downloads.html) and install the [CLI tools](https://postgresapp.com/documentation/cli-tools.html)
+3. Run `createdb chao_fan`
+4. Open the PostgreSQL repl (`psql chao_fan`) and run the following command: `CREATE EXTENSION vector;`
+5. Create the tables in the db by running `setup_db`.
+6. Create a `.env` file filling in the missing variable avlues below:
+    ```bash
+    PINTEREST_EMAIL=
+    PINTEREST_PASSWORD=
+    PINTEREST_USERNAME=
+    SPOONACULAR_API_KEY=
+    OPENAI_API_KEY=
+    EMBEDDING_DIMENSION=384
+    INGREDIENT_EMBEDDING_GENERATION_BATCH_SIZE=10000
+    INGREDIENT_EMBEDDING_GENERATION_TIMEOUT_SECONDS=600
+    POSTGRES_URL=postgresql://localhost/chao_fan
+    OVERWRITE_TABLES=False
+    ```
+6. Download the nutrition SQLite database from [here](https://drive.google.com/open?id=15Q32X2XQ9FRMcwIkKHS1SMvCZUQIA-ah&usp=drive_fs) and place in a directory called `data` in the repository.
+7. Insert the nutrition and price data into the database:
+    ```bash
+    python scripts/insert_ingredient_nutrition.py data/CompFood.sqlite
+    python scripts/insert_ingredient_prices.py
+    ```

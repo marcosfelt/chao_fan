@@ -1,7 +1,8 @@
-from sqlmodel import SQLModel, create_engine
-from . import models
+import os
 
-sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+from sqlmodel import Session, SQLModel, create_engine, text
 
-engine = create_engine(sqlite_url)
+from . import models  # Needed to make sure the tables are created
+
+postgres_url = os.environ.get("POSTGRES_URL")
+engine = create_engine(postgres_url)

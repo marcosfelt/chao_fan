@@ -1,14 +1,11 @@
-from typing import List, Literal, Optional
-from pydantic import HttpUrl, AwareDatetime
-from sqlmodel import (
-    Field,
-    Relationship,
-    SQLModel,
-    AutoString,
-)
-from sqlalchemy import DateTime
-from datetime import datetime
+import os
 from enum import Enum
+from typing import List, Optional
+
+from pgvector.sqlalchemy import Vector
+from pydantic import AwareDatetime
+from sqlalchemy import Column, DateTime
+from sqlmodel import Field, LargeBinary, Relationship, SQLModel
 
 ### Link Models ###
 # These have to be first so they can be referenced by the other models
@@ -35,10 +32,14 @@ class RecipeCuisineLink(SQLModel, table=True):
 ### Main Models ###
 # These are the main models that will be used in the application
 
+vector_column = lambda: Column(
+    Vector(float(os.environ.get("EMBEDDING_DIMENSION", 384)))
+)
+
 
 class Recipe(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    enrich_at: Optional[AwareDatetime] = Field(
+    enriched_at: Optional[AwareDatetime] = Field(
         default=None, sa_type=DateTime(timezone=True)
     )
     enrichment_failed_at: Optional[AwareDatetime] = Field(
@@ -61,6 +62,7 @@ class Recipe(SQLModel, table=True):
     meals: List["Meal"] = Relationship(
         back_populates="recipes", link_model=RecipeMealLink
     )
+    embedding: List[float] = Field(sa_column=vector_column())
 
 
 class Instruction(SQLModel, table=True):
@@ -71,40 +73,46 @@ class Instruction(SQLModel, table=True):
     recipe: Optional[Recipe] = Relationship(back_populates="instructions")
 
 
-class IngredientNutrition(SQLModel, table=True):
+class Ingredient(SQLModel):
+    description: str
+    embedding: List[float] = Field(sa_column=vector_column())
+
+
+class IngredientNutrition(Ingredient, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     fdc_id: Optional[int] = None
+    usda_data_type: Optional[str] = None
     description: Optional[str] = None
+    update_year: Optional[str] = None
+    serving_amount: Optional[float] = None
+    serving_text: Optional[str] = None
     serving_size: Optional[str] = None
-    food_category: Optional[str] = None
-    sugarstotalincludingnlea_grams: Optional[float] = None
-    fattyacidstotalsaturated_grams: Optional[float] = None
-    cholesterol_grams: Optional[float] = None
-    vitaminctotalascorbicacid_grams: Optional[float] = None
-    vitaminaiu_grams: Optional[float] = None
-    sodiumna_grams: Optional[float] = None
-    potassium_grams: Optional[float] = None
-    ironfe_grams: Optional[float] = None
-    calciumca_grams: Optional[float] = None
-    fiber_grams: Optional[float] = None
-    energy_grams: Optional[float] = None
-    carb_grams: Optional[float] = None
-    fat_grams: Optional[float] = None
-    protein_grams: Optional[float] = None
+    protein_amount: Optional[float] = None
+    protein_unit: Optional[str] = None
+    fat_amount: Optional[float] = None
+    fat_unit: Optional[str] = None
+    carb_amount: Optional[float] = None
+    carb_unit: Optional[str] = None
+    energy_amount: Optional[float] = None
+    energy_unit: Optional[str] = None
+    fiber_amount: Optional[float] = None
+    fiber_unit: Optional[str] = None
+    potassium_amount: Optional[float] = None
+    potassium_unit: Optional[str] = None
     recipe_ingredients: List["RecipeIngredient"] = Relationship(
         back_populates="ingredient_nutrition"
     )
+    embedding: List[float] = Field(sa_column=vector_column())
 
 
-class IngredientPrice(SQLModel, table=True):
+class IngredientPrice(Ingredient, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    description: str
     price_100grams: float
+    embedding: List[float] = Field(sa_column=vector_column())
 
 
-class RecipeIngredient(SQLModel, table=True):
+class RecipeIngredient(Ingredient, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
     amount: Optional[str] = None
     unit: Optional[str] = None
     full_description: Optional[str] = None
@@ -117,6 +125,7 @@ class RecipeIngredient(SQLModel, table=True):
     )
     recipe_id: Optional[int] = Field(default=None, foreign_key="recipe.id")
     recipe: Optional[Recipe] = Relationship(back_populates="recipe_ingredients")
+    embedding: List[float] = Field(sa_column=vector_column())
 
 
 class Cuisine(SQLModel, table=True):
