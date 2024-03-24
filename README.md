@@ -27,3 +27,12 @@ Generate meal plans automatically using what's out there on the internet.
 ### Walmart order
 1. Create grocery list from meal plan
 2. Use LaVague model to traverese walmart.com and place order
+
+## Setup
+
+0. Clone the repository: `git clone https://github.com/marcosfelt/chao_fan.git`
+1. Install the dependencies: `poetry install` or `pip install -e .`
+2. Download [postgres.app](https://postgresapp.com/downloads.html) and install the [CLI tools](https://postgresapp.com/documentation/cli-tools.html)
+3. Run `createdb chao_fan`
+4. Open the PostgreSQL repl (`psql chao_fan`) and run the following command: `CREATE EXTENSION vector;`
+5. Create the tables in the db by running `setup_db`.
