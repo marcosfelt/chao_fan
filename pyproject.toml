@@ -6,8 +6,7 @@ authors = ["Kobi Felton <kobi.c.f@gmail.com>"]
 license = "mIT"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pandas = "^1.4.3"
+python = ">=3.10,<=3.12"
 matplotlib = "^3.5.3"
 py3-pinterest = {git = "https://github.com/bstoilov/py3-pinterest.git"}
 pint = "^0.23"
@@ -22,6 +21,8 @@ sentence-transformers = "^2.5.1"
 psycopg2-binary = "^2.9.9"
 pgvector = "^0.2.5"
 nltk = "^3.8.1"
+recipe-scrapers = "^14.55.0"
+ingredient-parser-nlp = "^0.1.0b8"
 
 [tool.poetry.dev-dependencies]
 
