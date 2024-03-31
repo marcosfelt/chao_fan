@@ -29,6 +29,7 @@ lxml = ">=5.0.0,<5.1.0"
 
 [tool.poetry.scripts]
 setup_db = 'chao_fan.cli:setup_db'
+reset_db = 'chao_fan.cli:reset_db'
 
 [tool.poetry.group.dev.dependencies]
 openpyxl = "^3.1.2"

@@ -55,3 +55,14 @@ Generate meal plans automatically using what's out there on the internet.
     python scripts/insert_ingredient_nutrition.py data/CompFood.sqlite
     python scripts/insert_ingredient_prices.py
     ```
+
+## Render
+
+**Database**
+0. Setup a Postgres Database
+1. Coy the **external** url and paste locally in your `.env`. Run `setup_db` to create the tables.
+2. Copy the **internal** database url. Replace `postgres` with `postgresql`
+
+**Update recipe cron job**
+1. Create a cron job to run `chao_fan/pipelines/update_recipe_db.py`
+2. Paste the .env file from step 6 above in the environments tab.  Use the link from step 2 in database `POSTGRES_URL`.
