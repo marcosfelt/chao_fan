@@ -23,6 +23,7 @@ pgvector = "^0.2.5"
 nltk = "^3.8.1"
 recipe-scrapers = "^14.55.0"
 ingredient-parser-nlp = "^0.1.0b8"
+lxml = ">=5.0.0,<5.1.0"
 
 [tool.poetry.dev-dependencies]
 
