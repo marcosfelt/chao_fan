@@ -1,14 +1,14 @@
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from dotenv import load_dotenv
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, bindparam, select, text
 from tqdm import tqdm
 
-from chao_fan.db import SQLModel, engine
+from chao_fan.db import engine
 from chao_fan.integrations.pinterest import (
     Pin,
     get_pin_links,
@@ -17,9 +17,6 @@ from chao_fan.integrations.pinterest import (
 )
 from chao_fan.integrations.recipe_scrapers import scrape_recipe
 from chao_fan.models import Recipe
-
-BOARD_NAME = "Cookin'"
-MAX_SPOONACULAR_API_CALLS = 1
 
 
 def get_pinterest_links(board_name: str) -> List[Pin]:
@@ -119,7 +116,7 @@ def _enrich_recipes_batch(session: Session, recipes: List[Recipe], n: int):
 
 def enrich_recipes(
     engine: Engine,
-    max_api_calls: int = 150,
+    max_enrichments: int = 150,
     batch_size: int = 10,
     retry_enrichment_after: Optional[timedelta] = None,
 ):
@@ -141,8 +138,8 @@ def enrich_recipes(
     if retry_enrichment_after is None:
         retry_enrichment_after = timedelta(days=1)
     i = 0
-    batch_size = batch_size if batch_size < max_api_calls else max_api_calls
-    while i < max_api_calls:
+    batch_size = batch_size if batch_size < max_enrichments else max_enrichments
+    while i < max_enrichments:
         with Session(engine) as session:
             now = datetime.now()
             statement = (
@@ -166,15 +163,19 @@ def update_recipe_db():
 
     # Get pinterest links
     logger.info("Getting pinterest links")
-    pins = get_pinterest_links(BOARD_NAME)
+    board_name = os.environ.get("PINTEREST_BOARD_NAME")
+    if board_name is None:
+        raise ValueError("PINTEREST_BOARD_NAME environment variable not set")
+    pins = get_pinterest_links(board_name)
     new_pins = find_pins_not_in_db(pins, engine)
     logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
     insert_pins_into_db(new_pins, engine)
 
     # Enrich recipes
     logger.info("Enriching recipes")
+    max_enrichments = os.environ.get("MAX_ENRICHMENTS", 150)
     try:
-        enrich_recipes(engine, max_api_calls=MAX_SPOONACULAR_API_CALLS)
+        enrich_recipes(engine, max_enrichments=max_enrichments)
     except ValueError as e:
         logger.error(e)
 

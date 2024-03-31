@@ -41,6 +41,7 @@ Generate meal plans automatically using what's out there on the internet.
     PINTEREST_EMAIL=
     PINTEREST_PASSWORD=
     PINTEREST_USERNAME=
+    PINTEREST_BOARD_NAME="Cookin'"
     SPOONACULAR_API_KEY=
     OPENAI_API_KEY=
     EMBEDDING_DIMENSION=384
