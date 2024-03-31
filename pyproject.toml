@@ -8,7 +8,7 @@ license = "mIT"
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.12"
 matplotlib = "^3.5.3"
-py3-pinterest = {git = "https://github.com/bstoilov/py3-pinterest.git"}
+py3-pinterest = {git = "https://github.com/marcosfelt/py3-pinterest.git", branch = "fix_chrome_options"}
 pint = "^0.23"
 python-dotenv = "^1.0.1"
 sqlmodel = "^0.0.16"
