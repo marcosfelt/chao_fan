@@ -1,23 +1,25 @@
+import logging
+import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-from chao_fan.integrations.pinterest import (
-    setup_pinterest,
-    get_pinterest_board_id,
-    get_pin_links,
-    Pin,
-)
-from chao_fan.integrations.recipe_scrapers import scrape_recipe
+
 from dotenv import load_dotenv
-import os
-from chao_fan.models import Recipe
-from chao_fan.db import engine, SQLModel
-from sqlmodel import Session, text, bindparam, select
 from sqlalchemy.engine import Engine
-import logging
+from sqlmodel import Session, bindparam, select, text
 from tqdm import tqdm
 
+from chao_fan.db import SQLModel, engine
+from chao_fan.integrations.pinterest import (
+    Pin,
+    get_pin_links,
+    get_pinterest_board_id,
+    setup_pinterest,
+)
+from chao_fan.integrations.recipe_scrapers import scrape_recipe
+from chao_fan.models import Recipe
+
 BOARD_NAME = "Cookin'"
-MAX_SPOONACULAR_API_CALLS = 60
+MAX_SPOONACULAR_API_CALLS = 1
 
 
 def get_pinterest_links(board_name: str) -> List[Pin]:

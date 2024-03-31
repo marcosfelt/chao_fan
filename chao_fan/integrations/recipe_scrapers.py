@@ -1,11 +1,13 @@
+import logging
 from datetime import datetime
 from typing import Dict, List, Optional
+
 import nltk
-from recipe_scrapers import scrape_me, WebsiteNotImplementedError
-from recipe_scrapers._exceptions import SchemaOrgException, NoSchemaFoundInWildMode
 from ingredient_parser import parse_ingredient
-from chao_fan.models import Recipe, Instruction, RecipeIngredient, IngredientNutrition
-import logging
+from recipe_scrapers import WebsiteNotImplementedError, scrape_me
+from recipe_scrapers._exceptions import NoSchemaFoundInWildMode, SchemaOrgException
+
+from chao_fan.models import IngredientNutrition, Instruction, Recipe, RecipeIngredient
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +59,11 @@ def create_ingredients(ingredients_txt: List[str]) -> List[RecipeIngredient]:
             continue
 
         # Parse name
-        ingredient.name = (
+        ingredient.description = (
             parsed_ingredient.name.text if parsed_ingredient.name is not None else None
         )
-        if ingredient.name is None:
-            ingredient.name = ingredient_txt
+        if ingredient.description is None:
+            ingredient.description = ingredient_txt
         if len(parsed_ingredient.amount) > 0:
             ingredient.amount = parsed_ingredient.amount[0].quantity
             ingredient.unit = parsed_ingredient.amount[0].unit
