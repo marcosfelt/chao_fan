@@ -1800,7 +1800,7 @@ webdriver-manager = "*"
 type = "git"
 url = "https://github.com/marcosfelt/py3-pinterest.git"
 reference = "fix_chrome_options"
-resolved_reference = "43100751126f7c5c67280bdc214f9c15665ae660"
+resolved_reference = "edbbdfad3299a1b0419793bbf3ce29753b77d2c9"
 
 [[package]]
 name = "pycparser"
