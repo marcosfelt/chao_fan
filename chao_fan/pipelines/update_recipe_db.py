@@ -8,6 +8,7 @@ from sqlalchemy.engine import Engine
 from sqlmodel import Session, bindparam, select, text
 from tqdm import tqdm
 
+from chao_fan.constants import *
 from chao_fan.db import engine
 from chao_fan.integrations.pinterest import (
     Pin,
@@ -17,6 +18,8 @@ from chao_fan.integrations.pinterest import (
 )
 from chao_fan.integrations.recipe_scrapers import scrape_recipe
 from chao_fan.models import Recipe
+
+STAGE = os.environ.get("STAGE", PROD)
 
 
 def get_pinterest_links(board_name: str) -> List[Pin]:
@@ -104,7 +107,8 @@ def _enrich_recipes_batch(session: Session, recipes: List[Recipe], n: int):
     5. Generate recipe embedding
     6. Estimate recipe preference score using KNN on recipe embeddings
     """
-    for recipe in tqdm(recipes, desc="Enriching", total=n):
+    bar = tqdm(recipes, desc="Enriching", total=n, disable=STAGE == PROD)
+    for recipe in bar:
         enriched_recipe = scrape_recipe(recipe.source_url)
         if enriched_recipe is None:
             continue
