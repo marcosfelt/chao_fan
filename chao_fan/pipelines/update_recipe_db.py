@@ -177,12 +177,10 @@ def update_recipe_db():
     if board_name is None:
         raise ValueError("PINTEREST_BOARD_NAME environment variable not set")
     pins = get_pinterest_links(board_name)
-    if len(pins) == 0:
-        logger.info("No new pins found")
-        return
-    new_pins = find_pins_not_in_db(pins, engine)
-    logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
-    insert_pins_into_db(new_pins, engine)
+    if len(pins) > 0:
+        new_pins = find_pins_not_in_db(pins, engine)
+        logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
+        insert_pins_into_db(new_pins, engine)
 
     # Enrich recipes
     logger.info("Enriching recipes")
