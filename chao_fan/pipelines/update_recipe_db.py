@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, bindparam, select, text
 from tqdm import tqdm
+from urllib3.exceptions import HTTPError
 
 from chao_fan.constants import *
 from chao_fan.db import engine
@@ -20,6 +21,7 @@ from chao_fan.integrations.recipe_scrapers import scrape_recipe
 from chao_fan.models import Recipe
 
 STAGE = os.environ.get("STAGE", PROD)
+logger = logging.getLogger(__name__)
 
 
 def get_pinterest_links(board_name: str) -> List[Pin]:
@@ -41,7 +43,11 @@ def get_pinterest_links(board_name: str) -> List[Pin]:
         password=os.environ.get("PINTEREST_PASSWORD"),
         username=os.environ.get("PINTEREST_USERNAME"),
     )
-    board_id = get_pinterest_board_id(pinterest, board_name)
+    try:
+        board_id = get_pinterest_board_id(pinterest, board_name)
+    except HTTPError as e:
+        logger.error(e)
+        return []
     return get_pin_links(pinterest, board_id)
 
 
@@ -162,7 +168,7 @@ def enrich_recipes(
 
 def update_recipe_db():
     """Update recipe database with new pins from pinterest board"""
-    logger = logging.getLogger(__name__)
+
     load_dotenv()
 
     # Get pinterest links
@@ -171,6 +177,9 @@ def update_recipe_db():
     if board_name is None:
         raise ValueError("PINTEREST_BOARD_NAME environment variable not set")
     pins = get_pinterest_links(board_name)
+    if len(pins) == 0:
+        logger.info("No new pins found")
+        return
     new_pins = find_pins_not_in_db(pins, engine)
     logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
     insert_pins_into_db(new_pins, engine)
