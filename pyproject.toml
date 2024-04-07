@@ -26,6 +26,8 @@ ingredient-parser-nlp = "^0.1.0b8"
 lxml = ">=5.0.0,<5.1.0"
 
 [tool.poetry.dev-dependencies]
+pytest = "^7.0.0"
+pytest-mock = "^3.7.0"
 
 [tool.poetry.scripts]
 setup_db = 'chao_fan.cli:setup_db'
