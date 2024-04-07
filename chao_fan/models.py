@@ -5,7 +5,7 @@ from typing import List, Optional
 from pgvector.sqlalchemy import Vector
 from pydantic import AwareDatetime
 from sqlalchemy import Column, DateTime
-from sqlmodel import Field, LargeBinary, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 ### Link Models ###
 # These have to be first so they can be referenced by the other models
@@ -31,10 +31,8 @@ class RecipeCuisineLink(SQLModel, table=True):
 
 ### Main Models ###
 # These are the main models that will be used in the application
-
-vector_column = lambda: Column(
-    Vector(float(os.environ.get("EMBEDDING_DIMENSION", 384)))
-)
+def vector_column():
+    return Column(Vector(float(os.environ.get("EMBEDDING_DIMENSION", 384))))
 
 
 class Recipe(SQLModel, table=True):

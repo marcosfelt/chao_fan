@@ -1,5 +1,3 @@
-import json
-
 # from chao_fan.integrations.llama import (
 #     get_model,
 #     generate_cuisine_ingredients,
@@ -7,7 +5,6 @@ import json
 #     MealPlanTheme,
 # )
 import logging
-from typing import List
 
 logger = logging.getLogger(__name__)
 

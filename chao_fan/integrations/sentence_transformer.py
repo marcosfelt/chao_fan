@@ -2,13 +2,8 @@
 Integration with SQLite vector search
 """
 
-from sqlite3 import Connection
-from typing import List
-
 import numpy as np
-from sentence_transformers import SentenceTransformer, util
-
-from chao_fan.models import IngredientNutrition, IngredientPrice
+from sentence_transformers import SentenceTransformer
 
 
 def get_model(device: str = "cpu"):

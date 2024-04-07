@@ -1,8 +1,9 @@
 import os
 
-from sqlmodel import Session, SQLModel, create_engine, text
+from sqlmodel import create_engine
 
-from . import models  # Needed to make sure the tables are created
+# Needed to make sure the tables are created
+from . import models  # noqa: F401
 
 postgres_url = os.environ.get("POSTGRES_URL")
 engine = create_engine(postgres_url)

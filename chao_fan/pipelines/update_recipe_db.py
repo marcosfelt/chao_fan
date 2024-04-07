@@ -9,7 +9,7 @@ from sqlmodel import Session, bindparam, select, text
 from tqdm import tqdm
 from urllib3.exceptions import HTTPError
 
-from chao_fan.constants import *
+from chao_fan.constants import PROD
 from chao_fan.db import engine
 from chao_fan.integrations.pinterest import (
     Pin,
@@ -155,7 +155,7 @@ def enrich_recipes(
             statement = (
                 select(Recipe)
                 .where(
-                    (Recipe.enriched_at == None)
+                    (Recipe.enriched_at == None)  # noqa
                     | (Recipe.enrichment_failed_at < now - retry_enrichment_after)
                 )
                 .limit(batch_size)

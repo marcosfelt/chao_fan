@@ -1,13 +1,8 @@
 import logging
 import sqlite3
 from argparse import ArgumentParser
-from io import BytesIO
-from zipfile import ZipFile
 
 import pandas as pd
-import requests
-from sqlalchemy import Engine
-from sqlmodel import select
 
 from chao_fan.db import Session, engine
 from chao_fan.models import IngredientNutrition

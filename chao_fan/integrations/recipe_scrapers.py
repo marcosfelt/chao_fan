@@ -1,13 +1,13 @@
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import nltk
 from ingredient_parser import parse_ingredient
 from recipe_scrapers import WebsiteNotImplementedError, scrape_me
 from recipe_scrapers._exceptions import NoSchemaFoundInWildMode, SchemaOrgException
-from urllib3.exceptions import HTTPError
 from requests.exceptions import ConnectionError
+from urllib3.exceptions import HTTPError
 
 from chao_fan.models import IngredientNutrition, Instruction, Recipe, RecipeIngredient
 
