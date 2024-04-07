@@ -7,6 +7,7 @@ from ingredient_parser import parse_ingredient
 from recipe_scrapers import WebsiteNotImplementedError, scrape_me
 from recipe_scrapers._exceptions import NoSchemaFoundInWildMode, SchemaOrgException
 from urllib3.exceptions import HTTPError
+from requests.exceptions import ConnectionError
 
 from chao_fan.models import IngredientNutrition, Instruction, Recipe, RecipeIngredient
 
@@ -112,6 +113,10 @@ def scrape_recipe(url: str) -> Recipe | None:
             logger.error(e)
             return recipe
         except HTTPError as e:
+            recipe.enrichment_failed_at = datetime.now()
+            logger.error(e)
+            return recipe
+        except ConnectionError as e:
             recipe.enrichment_failed_at = datetime.now()
             logger.error(e)
             return recipe
