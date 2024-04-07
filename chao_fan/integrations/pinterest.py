@@ -1,6 +1,7 @@
-from typing import Dict, List, Optional
-from py3pin.Pinterest import Pinterest
 from dataclasses import dataclass
+from typing import List, Optional
+
+from py3pin.Pinterest import Pinterest
 
 
 @dataclass

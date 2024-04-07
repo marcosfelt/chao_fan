@@ -45,7 +45,7 @@ def generate_ingredient_embeddings(
             # Query for ingredients that don't have embeddings
             ingredients = session.exec(
                 select(ingredient_model)
-                .where(ingredient_model.embedding == None)
+                .where(ingredient_model.embedding == None)  # noqa
                 .limit(batch_size)
             )
             ingredients: List[Ingredient] = ingredients.fetchall()

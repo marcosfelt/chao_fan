@@ -35,7 +35,7 @@ def download_ingredient_price_data(
         The ingredient price data
     """
     params = {"v": version}
-    url = f"https://www.ers.usda.gov/webdocs/DataFiles/105537/pp_national_average_prices.xlsx"
+    url = "https://www.ers.usda.gov/webdocs/DataFiles/105537/pp_national_average_prices.xlsx"
     r = requests.get(url, params=params, allow_redirects=True)
     if r.status_code != 200:
         raise ValueError(
