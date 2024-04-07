@@ -31,7 +31,7 @@ def test_get_pinterest_links(board_name, expected_call_count):
          patch("chao_fan.pipelines.update_recipe_db.get_pinterest_board_id") as mock_get_board_id, \
          patch("chao_fan.pipelines.update_recipe_db.get_pin_links") as mock_get_links:
         mock_get_board_id.return_value = "123"
-        mock_get_links.return_value = pinterest_pins()
+        mock_get_links.return_value = pinterest_pins
         links = get_pinterest_links(board_name)
         assert mock_setup.call_count == expected_call_count
         assert mock_get_board_id.call_count == expected_call_count
@@ -42,7 +42,7 @@ def test_get_pinterest_links(board_name, expected_call_count):
             assert len(links) == 0
 
 def test_find_pins_not_in_db(mock_engine, pinterest_pins, database_recipes):
-    mock_engine.return_value.execute.return_value.fetchall.return_value = [(pin.url,) for pin in database_recipes]
+    mock_engine.return_value.execute.return_value.fetchall.return_value = [(recipe.source_url,) for recipe in database_recipes]
     new_pins = find_pins_not_in_db(pinterest_pins, engine)
     assert len(new_pins) == 1
     assert new_pins[0].url == "https://pinterest.com/pin2"
