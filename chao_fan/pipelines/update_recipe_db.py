@@ -178,7 +178,7 @@ def update_recipe_db():
         raise ValueError("PINTEREST_BOARD_NAME environment variable not set")
     try:
         pins = get_pinterest_links(board_name)
-    except Exception as e:
+    except requests.exceptions.HTTPError as e:
         logger.error("Failed to fetch Pinterest links due to a login issue: %s", e)
         return
     if len(pins) > 0:
