@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -13,7 +14,11 @@ class Pin:
 def setup_pinterest(email: str, password: str, username: str) -> Pinterest:
     """Setup pinterest"""
     pinterest = Pinterest(email=email, password=password, username=username)
-    pinterest.login()
+    try:
+        pinterest.login()
+    except Exception as e:
+        logging.error("Failed to login to Pinterest: %s", e)
+        raise
     return pinterest
 
 
