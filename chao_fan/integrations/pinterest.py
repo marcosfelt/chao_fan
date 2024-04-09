@@ -14,10 +14,7 @@ class Pin:
 def setup_pinterest(email: str, password: str, username: str) -> Pinterest:
     """Setup pinterest"""
     pinterest = Pinterest(email=email, password=password, username=username)
-    try:
-        pinterest.login()
-    except Exception as e:
-        raise
+    pinterest.login()
     return pinterest
 
 
