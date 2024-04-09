@@ -17,7 +17,6 @@ def setup_pinterest(email: str, password: str, username: str) -> Pinterest:
     try:
         pinterest.login()
     except Exception as e:
-        logging.error("Failed to login to Pinterest: %s", e)
         raise
     return pinterest
 
