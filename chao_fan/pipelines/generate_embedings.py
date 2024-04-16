@@ -17,6 +17,7 @@ def generate_ingredient_embeddings(
     engine: Engine,
     ingredient_model: Ingredient,
     batch_size: int,
+    device: str | None = None,
 ):
     """
     Generate embeddings for ingredients tables that don't have them
@@ -30,7 +31,7 @@ def generate_ingredient_embeddings(
     batch_size : int
         The batch size for encoding embeddings
     """
-    transformer_model = get_model()
+    transformer_model = get_model(device=device)
     with Session(engine) as session:
         table_name = ingredient_model.__tablename__
         n_rows = session.exec(
@@ -71,7 +72,7 @@ def generate_ingredient_embeddings(
 
 def update_embeddings():
     # Generate IngredientNutrition and IngredientPrice embeddings
-
+    device = os.environ.get("INGREDIENT_EMBEDDING_DEVICE", None)
     batch_size = int(os.environ.get("INGREDIENT_EMBEDDING_GENERATION_BATCH_SIZE", 1000))
     timeout = os.environ.get("INGREDIENT_EMBEDDING_GENERATION_TIMEOUT_SECONDS", 600)
     try:
@@ -79,7 +80,7 @@ def update_embeddings():
             for ingredient in [IngredientNutrition, IngredientPrice]:
                 logger.info(f"Generating embeddings for {ingredient.__name__}")
                 generate_ingredient_embeddings(
-                    engine, ingredient, batch_size=batch_size
+                    engine, ingredient, batch_size=batch_size, device=device
                 )
     except TimeoutError:
         logger.error(
