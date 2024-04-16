@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
+import requests
 from dotenv import load_dotenv
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, bindparam, select, text
