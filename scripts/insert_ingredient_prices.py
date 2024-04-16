@@ -3,9 +3,9 @@ import logging
 import pandas as pd
 import requests
 from sqlalchemy import Engine
-from sqlmodel import select
+from sqlmodel import Session, select
 
-from chao_fan.db import Session, engine
+from chao_fan.db import engine
 from chao_fan.models import IngredientPrice
 
 logger = logging.getLogger(__name__)
@@ -90,4 +90,4 @@ def update_ingredient_price_data():
 
 
 if __name__ == "__main__":
-    upsert_ingredient_price_data()
+    update_ingredient_price_data()

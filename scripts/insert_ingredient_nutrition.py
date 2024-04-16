@@ -3,8 +3,9 @@ import sqlite3
 from argparse import ArgumentParser
 
 import pandas as pd
+from sqlmodel import Session
 
-from chao_fan.db import Session, engine
+from chao_fan.db import engine
 from chao_fan.models import IngredientNutrition
 
 logger = logging.getLogger(__name__)
