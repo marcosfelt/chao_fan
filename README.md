@@ -67,3 +67,13 @@ Generate meal plans automatically using what's out there on the internet.
 **Update recipe cron job**
 1. Create a cron job to run `chao_fan/pipelines/update_recipe_db.py`
 2. Paste the .env file from step 6 above in the environments tab.  Use the link from step 2 in database `POSTGRES_URL`.
+
+
+# Modal
+
+To generate the large table of embeddings, it's best to use a GPU. Modal gives an easy way to do that. This script generates all the embeddings:
+
+```bash
+modal run scripts/generate_embeddings_modal.py
+```
+
