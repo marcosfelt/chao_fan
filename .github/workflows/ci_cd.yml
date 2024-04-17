@@ -1,9 +1,16 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [ main ]
   pull_request:
+    
+concurrency:
+  # Use github.run_id on main branch
+  # Use github.event.pull_request.number on pull requests, so it's unique per pull request
+  # Use github.ref on other branches, so it's unique per branch
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Linting
@@ -74,5 +81,15 @@ jobs:
       shell: bash
       run: |
         WHL_NAME=$(ls chao_fan-*.whl)
-        pip install ${WHL_NAME} pytest
+        pip install ${WHL_NAME} pytest pytest-mock
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+    - name: Deploy to production
+      if: github.ref == 'refs/heads/main'
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:        
+        service-id: ${{ secrets.RENDER_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
