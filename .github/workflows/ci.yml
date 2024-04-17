@@ -76,3 +76,6 @@ jobs:
         WHL_NAME=$(ls chao_fan-*.whl)
         pip install ${WHL_NAME} pytest
 
+    - name: Run tests
+      shell: bash
+      run: pytest chao_fan

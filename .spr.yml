@@ -3,7 +3,7 @@ githubRepoName: chao_fan
 githubHost: github.com
 githubRemote: origin
 githubBranch: main
-requireChecks: false
+requireChecks: true
 requireApproval: false
 mergeMethod: merge
 mergeQueue: false
