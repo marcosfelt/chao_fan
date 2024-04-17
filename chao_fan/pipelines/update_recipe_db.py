@@ -5,6 +5,7 @@ from typing import List, Optional
 
 import requests
 from dotenv import load_dotenv
+from selenium.common.exceptions import InvalidSessionIdException
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, bindparam, select, text
 from tqdm import tqdm
@@ -177,11 +178,16 @@ def update_recipe_db():
     board_name = os.environ.get("PINTEREST_BOARD_NAME")
     if board_name is None:
         raise ValueError("PINTEREST_BOARD_NAME environment variable not set")
+
     try:
         pins = get_pinterest_links(board_name)
     except requests.exceptions.HTTPError as e:
         logger.error("Failed to fetch Pinterest links due to a login issue: %s", e)
         return
+    except InvalidSessionIdException as e:
+        logger.error("Failed to fetch Pinterest links due to a login issue: %s", e)
+        return
+
     if len(pins) > 0:
         new_pins = find_pins_not_in_db(pins, engine)
         logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
