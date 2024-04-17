@@ -25,6 +25,9 @@ logger = logging.getLogger(__name__)
 INGREDIENT_PRICE_COSINE_DISTANCE_CUTOFF = float(
     os.environ.get("INGREDIENT_PRICE_COSINE_DISTANCE_CUTOFF", 0.6)
 )
+INGREDIENT_NUTRITION_COSINE_DISTANCE_CUTOFF = float(
+    os.environ.get("INGREDIENT_NUTRITION_COSINE_DISTANCE_CUTOFF", 0.8)
+)
 
 
 def create_instructions(
@@ -95,9 +98,26 @@ def estimate_ingredient_price(
 
 
 def estimate_ingredient_nutrition(
-    ingredient: RecipeIngredient, session: Session
+    ingredient: RecipeIngredient,
+    session: Session,
+    cosine_distance_cutoff: float = 0.6,
 ) -> IngredientNutrition | None:
-    return {}
+    if ingredient.embedding is None:
+        return None
+    statement = (
+        select(IngredientNutrition)
+        .order_by(IngredientNutrition.embedding.cosine_distance(ingredient.embedding))
+        .limit(1)
+    )
+    results: List[IngredientNutrition] = session.exec(statement).all()
+    if len(results) == 0:
+        return None
+    if (
+        results[0].embedding.cosine_distance(ingredient.embedding)
+        < cosine_distance_cutoff
+    ):
+        return None
+    return results[0]
 
 
 def create_ingredients(
@@ -138,11 +158,17 @@ def create_ingredients(
         if session is not None and ingredient.embedding is not None:
             # Estimate ingredient price
             ingredient.estimated_price_100grams = estimate_ingredient_price(
-                ingredient, session
+                ingredient,
+                session,
+                cosine_distance_cutoff=INGREDIENT_PRICE_COSINE_DISTANCE_CUTOFF,
             )
 
             # Estimate ingredient nutrition
-            ingredient_nutrition = estimate_ingredient_nutrition(ingredient, session)
+            ingredient_nutrition = estimate_ingredient_nutrition(
+                ingredient,
+                session,
+                cosine_distance_cutoff=INGREDIENT_NUTRITION_COSINE_DISTANCE_CUTOFF,
+            )
             if ingredient_nutrition:
                 ingredient.ingredient_nutrition = ingredient_nutrition
 
