@@ -116,7 +116,7 @@ def _enrich_recipes_batch(session: Session, recipes: List[Recipe], n: int):
     """
     bar = tqdm(recipes, desc="Enriching", total=n, disable=STAGE == PROD)
     for recipe in bar:
-        enriched_recipe = scrape_recipe(recipe.source_url)
+        enriched_recipe = scrape_recipe(recipe.source_url, session)
         if enriched_recipe is None:
             continue
         # recipe_data = recipe.model_dump(exclude_unset=True)
