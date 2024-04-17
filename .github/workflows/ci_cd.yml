@@ -83,6 +83,10 @@ jobs:
         WHL_NAME=$(ls chao_fan-*.whl)
         pip install ${WHL_NAME} pytest pytest-mock
 
+    - name: Run tests
+      shell: bash
+      run: pytest chao_fan
+
   deploy:
     runs-on: ubuntu-latest
     needs: [test]
