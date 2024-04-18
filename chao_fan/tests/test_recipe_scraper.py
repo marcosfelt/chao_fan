@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from chao_fan.integrations.recipe_scrapers import (
     RecipeIngredient,
     Session,
+    estimate_ingredient_nutrition,
     estimate_ingredient_price,
 )
 
@@ -33,4 +34,31 @@ def test_estimate_ingredient_price_below_cutoff(mocker):
     mock_result.price_100grams = 1.0
     session.exec().all.return_value = [mock_result] * 5
     result = estimate_ingredient_price(ingredient, session)
+    assert result is None
+
+
+def test_estimate_ingredient_nutrition_no_embedding(mocker):
+    ingredient = RecipeIngredient(embedding=None)
+    session = mocker.Mock(spec=Session)
+    result = estimate_ingredient_nutrition(ingredient, session)
+    assert result is None
+
+
+def test_estimate_ingredient_nutrition_with_embedding(mocker):
+    ingredient = RecipeIngredient(embedding=[0.1, 0.2, 0.3])
+    session = mocker.Mock(spec=Session)
+    mock_result = Mock()
+    mock_result.embedding.cosine_distance.return_value = 0.7
+    session.exec().all.return_value = [mock_result]
+    result = estimate_ingredient_nutrition(ingredient, session)
+    assert result == mock_result
+
+
+def test_estimate_ingredient_nutrition_below_cutoff(mocker):
+    ingredient = RecipeIngredient(embedding=[0.1, 0.2, 0.3])
+    session = mocker.Mock(spec=Session)
+    mock_result = Mock()
+    mock_result.embedding.cosine_distance.return_value = 0.5
+    session.exec().all.return_value = [mock_result]
+    result = estimate_ingredient_nutrition(ingredient, session)
     assert result is None
