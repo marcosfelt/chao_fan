@@ -20,6 +20,7 @@ from chao_fan.integrations.pinterest import (
     setup_pinterest,
 )
 from chao_fan.integrations.recipe_scrapers import scrape_recipe
+from chao_fan.integrations.sentence_transformer import get_model
 from chao_fan.models import Recipe
 
 STAGE = os.environ.get("STAGE", PROD)
@@ -115,15 +116,11 @@ def _enrich_recipes_batch(session: Session, recipes: List[Recipe], n: int):
     5. Generate recipe embedding
     6. Estimate recipe preference score using KNN on recipe embeddings
     """
+    model = get_model()
     bar = tqdm(recipes, desc="Enriching", total=n, disable=STAGE == PROD)
     for recipe in bar:
-        enriched_recipe = scrape_recipe(recipe.source_url, session)
-        if enriched_recipe is None:
-            continue
-        # recipe_data = recipe.model_dump(exclude_unset=True)
-        # enriched_recipe.sqlmodel_update(recipe_data)
+        enriched_recipe = scrape_recipe(recipe, session=session, embedding_model=model)
         session.add(enriched_recipe)
-        session.delete(recipe)
 
 
 def enrich_recipes(
@@ -157,8 +154,13 @@ def enrich_recipes(
             statement = (
                 select(Recipe)
                 .where(
-                    (Recipe.enriched_at == None)  # noqa
+                    (
+                        (Recipe.enriched_at == None)  # noqa
+                        & (Recipe.enrichment_failed_at == None)  # noqa
+                    )
                     | (Recipe.enrichment_failed_at < now - retry_enrichment_after)
+                    | Recipe.instructions
+                    == None  # noqa
                 )
                 .limit(batch_size)
             )
@@ -183,10 +185,8 @@ def update_recipe_db():
         pins = get_pinterest_links(board_name)
     except requests.exceptions.HTTPError as e:
         logger.error("Failed to fetch Pinterest links due to a login issue: %s", e)
-        return
     except InvalidSessionIdException as e:
         logger.error("Failed to fetch Pinterest links due to a login issue: %s", e)
-        return
 
     if len(pins) > 0:
         new_pins = find_pins_not_in_db(pins, engine)
@@ -195,7 +195,7 @@ def update_recipe_db():
 
     # Enrich recipes
     logger.info("Enriching recipes")
-    max_enrichments = os.environ.get("MAX_ENRICHMENTS", 150)
+    max_enrichments = int(os.environ.get("MAX_ENRICHMENTS", 150))
     try:
         enrich_recipes(engine, max_enrichments=max_enrichments)
     except ValueError as e:

@@ -85,6 +85,7 @@ class IngredientNutrition(Ingredient, table=True):
     serving_amount: Optional[float] = None
     serving_text: Optional[str] = None
     serving_size: Optional[str] = None
+    serving_size_unit: Optional[str] = None
     protein_amount: Optional[float] = None
     protein_unit: Optional[str] = None
     fat_amount: Optional[float] = None

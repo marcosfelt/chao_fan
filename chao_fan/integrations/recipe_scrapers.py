@@ -83,16 +83,15 @@ def estimate_ingredient_price(
         return None
     statement = (
         select(IngredientPrice)
+        .where(
+            IngredientPrice.embedding.cosine_distance(ingredient.embedding)
+            < cosine_distance_cutoff
+        )
         .order_by(IngredientPrice.embedding.cosine_distance(ingredient.embedding))
         .limit(number_to_average)
     )
     results: List[IngredientPrice] = session.exec(statement).all()
     if len(results) == 0:
-        return None
-    if (
-        results[0].embedding.cosine_distance(ingredient.embedding)
-        < cosine_distance_cutoff
-    ):
         return None
     return sum([result.price_100grams for result in results]) / 5
 
@@ -106,16 +105,15 @@ def estimate_ingredient_nutrition(
         return None
     statement = (
         select(IngredientNutrition)
+        .where(
+            IngredientNutrition.embedding.cosine_distance(ingredient.embedding)
+            < cosine_distance_cutoff
+        )
         .order_by(IngredientNutrition.embedding.cosine_distance(ingredient.embedding))
         .limit(1)
     )
     results: List[IngredientNutrition] = session.exec(statement).all()
     if len(results) == 0:
-        return None
-    if (
-        results[0].embedding.cosine_distance(ingredient.embedding)
-        < cosine_distance_cutoff
-    ):
         return None
     return results[0]
 
@@ -146,13 +144,18 @@ def create_ingredients(
         if ingredient.description is None:
             ingredient.description = ingredient_txt
         if len(parsed_ingredient.amount) > 0:
-            ingredient.amount = parsed_ingredient.amount[0].quantity
-            ingredient.unit = parsed_ingredient.amount[0].unit
+            try:
+                ingredient.amount = float(parsed_ingredient.amount[0].quantity)
+                ingredient.unit = str(parsed_ingredient.amount[0].unit)
+            except ValueError:
+                pass
 
         # Embedding
         if embedding_model is not None:
             ingredient.embedding = generate_embeddings(
-                ingredient.description, model=embedding_model
+                ingredient.description,
+                model=embedding_model,
+                show_progress_bar=False,
             )
 
         if session is not None and ingredient.embedding is not None:
@@ -176,7 +179,11 @@ def create_ingredients(
     return parsed_ingredients
 
 
-def scrape_recipe(url: str, session: Session | None = None) -> Recipe | None:
+def scrape_recipe(
+    recipe: Recipe,
+    session: Session | None = None,
+    embedding_model=None,
+) -> Recipe:
     """
     Scrape a recipe from a URL
 
@@ -195,27 +202,23 @@ def scrape_recipe(url: str, session: Session | None = None) -> Recipe | None:
     scraper = None
     wild_mode = False
     tries = 0
-    recipe = Recipe(source_url=url)
+    recipe.enrichment_failed_at = datetime.now()
     while not scraper and tries < 3:
         try:
-            scraper = scrape_me(url, wild_mode=wild_mode)
+            scraper = scrape_me(recipe.source_url, wild_mode=wild_mode)
             tries += 1
         except WebsiteNotImplementedError:
             wild_mode = True
         except NoSchemaFoundInWildMode as e:
-            recipe.enrichment_failed_at = datetime.now()
             logger.error(e)
             return recipe
         except HTTPError as e:
-            recipe.enrichment_failed_at = datetime.now()
             logger.error(e)
             return recipe
         except ConnectionError as e:
-            recipe.enrichment_failed_at = datetime.now()
             logger.error(e)
             return recipe
     if scraper is None:
-        recipe.enrichment_failed_at = datetime.now()
         return recipe
 
     try:
@@ -224,10 +227,8 @@ def scrape_recipe(url: str, session: Session | None = None) -> Recipe | None:
         instructions_list = scraper.instructions_list()
     except SchemaOrgException as e:
         logger.error(e)
-        recipe.enrichment_failed_at = datetime.now()
         return recipe
     except TypeError as e:
-        recipe.enrichment_failed_at = datetime.now()
         logger.error(e)
         return recipe
 
@@ -238,7 +239,9 @@ def scrape_recipe(url: str, session: Session | None = None) -> Recipe | None:
             recipe.instructions = instructions
 
     # Ingredients
-    ingredients = create_ingredients(scraper.ingredients())
+    ingredients = create_ingredients(
+        scraper.ingredients(), embedding_model=embedding_model, session=session
+    )
     if len(ingredients) > 0:
         recipe.recipe_ingredients = ingredients
 
@@ -260,4 +263,5 @@ def scrape_recipe(url: str, session: Session | None = None) -> Recipe | None:
         recipe.image = image
 
     recipe.enriched_at = datetime.now()
+    recipe.enrichment_failed_at = None
     return recipe

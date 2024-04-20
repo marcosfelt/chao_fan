@@ -64,7 +64,7 @@ def main():
         logger.info(f"Processing batch {batch}/{n_batches}")
 
         # Rename columns
-        df = df.rename(rename_columns_grams)
+        # df = df.rename(rename_columns_grams)
 
         # Connect to Postgres
         with Session(engine) as session:

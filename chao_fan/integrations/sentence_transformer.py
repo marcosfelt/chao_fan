@@ -3,6 +3,7 @@ Integration with SQLite vector search
 """
 
 import logging
+from typing import List
 
 import numpy as np
 import torch
@@ -23,7 +24,7 @@ def generate_embeddings(
     sentences,
     model,
     **kwargs,
-) -> np.ndarray:
+) -> List[List[float]]:
     """Generate embeddings for a list of ingredients
 
     Parameters
@@ -33,6 +34,6 @@ def generate_embeddings(
 
 
     """
-
-    embeddings = model.encode(sentences, **kwargs)
+    embeddings: np.ndarray = model.encode(sentences, **kwargs)
+    embeddings = embeddings.astype(np.float32).tolist()
     return embeddings
