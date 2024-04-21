@@ -183,15 +183,14 @@ def update_recipe_db():
 
     try:
         pins = get_pinterest_links(board_name)
+        if len(pins) > 0:
+            new_pins = find_pins_not_in_db(pins, engine)
+            logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
+            insert_pins_into_db(new_pins, engine)
     except requests.exceptions.HTTPError as e:
         logger.error("Failed to fetch Pinterest links due to a login issue: %s", e)
     except InvalidSessionIdException as e:
         logger.error("Failed to fetch Pinterest links due to a login issue: %s", e)
-
-    if len(pins) > 0:
-        new_pins = find_pins_not_in_db(pins, engine)
-        logger.info(f"Found {len(new_pins)} new pins. Inserting into recipe table.")
-        insert_pins_into_db(new_pins, engine)
 
     # Enrich recipes
     logger.info("Enriching recipes")
