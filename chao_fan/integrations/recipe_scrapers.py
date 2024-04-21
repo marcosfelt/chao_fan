@@ -85,7 +85,7 @@ def estimate_ingredient_price(
         select(IngredientPrice)
         .where(
             IngredientPrice.embedding.cosine_distance(ingredient.embedding)
-            < cosine_distance_cutoff
+            > cosine_distance_cutoff
         )
         .order_by(IngredientPrice.embedding.cosine_distance(ingredient.embedding))
         .limit(number_to_average)
@@ -107,7 +107,7 @@ def estimate_ingredient_nutrition(
         select(IngredientNutrition)
         .where(
             IngredientNutrition.embedding.cosine_distance(ingredient.embedding)
-            < cosine_distance_cutoff
+            > cosine_distance_cutoff
         )
         .order_by(IngredientNutrition.embedding.cosine_distance(ingredient.embedding))
         .limit(1)

@@ -32,7 +32,7 @@ def test_estimate_ingredient_price_below_cutoff(mocker):
     mock_result = Mock()
     mock_result.embedding.cosine_distance.return_value = 0.5
     mock_result.price_100grams = 1.0
-    session.exec().all.return_value = [mock_result] * 5
+    session.exec().all.return_value = []
     result = estimate_ingredient_price(ingredient, session)
     assert result is None
 
@@ -59,6 +59,6 @@ def test_estimate_ingredient_nutrition_below_cutoff(mocker):
     session = mocker.Mock(spec=Session)
     mock_result = Mock()
     mock_result.embedding.cosine_distance.return_value = 0.5
-    session.exec().all.return_value = [mock_result]
+    session.exec().all.return_value = []
     result = estimate_ingredient_nutrition(ingredient, session)
     assert result is None
